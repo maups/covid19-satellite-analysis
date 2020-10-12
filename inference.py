@@ -195,7 +195,8 @@ def non_max_suppression_fast (boxes, overlapThresh):
          overlap = overlap * cls
 
       if int(clas[i]) in large:
-         overlapThresh = 0.5 
+         overlapThresh = 0.1
+         #overlapThresh = 0.5 
 
       indices_erased = np.where(overlap > overlapThresh)[0]
 
@@ -354,6 +355,7 @@ if __name__ == "__main__":
       box5, cof5, cls5 = process_image (model_five_zoom, args, model_five_region_overlap, model_five_classifier, 'model_five')
 
    f = open(args.output,'w')
+   f2 = open(args.output + '.metric','w')
 
    region_list = []
 
@@ -417,6 +419,8 @@ if __name__ == "__main__":
    
    nof_regions_filtered_by_dimensions = 0
 
+   xview_class = ['00','01','02','03','04','05','06','07','08','09','10','11-fixed-wing-aircraft','12-small-aircraft','13-passenger-cargo-plane','14','15-helicopter','16','17-passenger-vehicle','18-small-car','19-bus','20-pickup-truck','21-utility-truck','22','23-truck','24-cargo-truck','25-truck-tractor-w-box-trailer','26-truck-tractor','27-trailer','28-truck-tractor-w-flatbed-trailer','29-truck-tractor-w-liquid-tank','30','31','32-crane-truck','33-railway-vehicle','34-passenger-car','35-cargo-container-car','36-flat-car','37-tank-car','38-locomotive','39','40-maritime-vessel','41-motorboat','42-sailboat','43','44-tugboat','45-barge','46','47-fishing-vessel','48','49-ferry','50-yacht','51-container-ship','52-oil-tanker','53-engineering-vehicle','54-tower-crane','55-container-crane','56-reach-stacker','57-straddle-carrier','58','59-mobile-crane','60-dump-truck','61-haul-truck','62-scraper-tractor','63-front-loader-bulldozer','64-excavator','65-cement-mixer','66-ground-grader','67','68','69','70','71-hut-tent','72-shed','73-building','74-aircraft-hangar','75','76-damaged-building','77-facility','78','79-construction-site','80','81','82','83-vehicle-lot','84-helipad','85','86-storage-tank','87','88','89-shipping-container-lot','90','91-shipping-container','92','93-pylon','94-tower']
+
    for r in region_list_after_nms:
       xmin = int(r[0])
       ymin = int(r[1])
@@ -428,6 +432,8 @@ if __name__ == "__main__":
       r_height = ymax - ymin 
       if (r_width > min_region_width) and (r_height > min_region_height):
          f.write('%d %d %d %d %d %f \n' % (xmin, ymin, xmax, ymax, clas, confidence))
+         if confidence > 0.25:
+            f2.write('%s %f %d %d %d %d\n' % (xview_class[clas], confidence, xmin, ymin, xmax, ymax))
       else:
          nof_regions_filtered_by_dimensions += 1 
       nof_detections += 1
@@ -435,8 +441,10 @@ if __name__ == "__main__":
    # Avoiding empty files:
    if (nof_detections == 0):
       f.write (("%d %d %d %d %d %f\n") % (0, 0, 1, 1, 11, 0.001))
+      f2.write (("%d %d %d %d %d %f\n") % ("None", 0.0000, 1, 1, 1, 1))
 
    if verbose:
       print ('# of candidates: ', nof_candidate_regions,', # of detections: ', nof_detections, ', # of regions filtered by dimensions: ', nof_regions_filtered_by_dimensions)
 
    f.close()
+   f2.close()
